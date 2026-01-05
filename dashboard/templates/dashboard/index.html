@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Student Insight | Intelligent Study Recommender</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Inter:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'dashboard/css/style.css' %}">
+</head>
+
+<body>
+    <div class="landing-hero flex-center"
+        style="min-height: 100vh; flex-direction: column; text-align: center; padding: 2rem; position: relative; overflow: hidden;">
+
+        <!-- Decorative Background Elements -->
+        <div
+            style="position: absolute; top: -100px; left: -100px; width: 400px; height: 400px; background: var(--primary); filter: blur(150px); opacity: 0.3; border-radius: 50%;">
+        </div>
+        <div
+            style="position: absolute; bottom: -100px; right: -100px; width: 400px; height: 400px; background: var(--secondary); filter: blur(150px); opacity: 0.3; border-radius: 50%;">
+        </div>
+
+        <div class="glass-panel animate-fade-in" style="max-width: 800px; z-index: 10;">
+            <h1>AI Study Insight</h1>
+            <p style="font-size: 1.2rem; margin-bottom: 2rem;">
+                Unlock your potential with data-driven habit analysis. <br>
+                Personalized recommendations for a smarter learning journey.
+            </p>
+
+            <!-- Authenticated State -->
+            {% if user.is_authenticated %}
+            <div style="text-align: center; margin-top: 2rem;">
+                <p style="font-size: 1.1rem; margin-bottom: 1.5rem;">Welcome back, <strong>{{ user.username }}</strong>!
+                </p>
+                <div style="display: flex; gap: 1rem; justify-content: center;">
+                    {% if user.userprofile.role == 'STUDENT' %}
+                    <a href="{% url 'student_dashboard' %}" class="btn btn-primary">Go to Student Dashboard</a>
+                    {% else %}
+                    <a href="{% url 'teacher_dashboard' %}" class="btn btn-primary">Go to Teacher Dashboard</a>
+                    {% endif %}
+                    <a href="{% url 'logout' %}" class="btn btn-secondary">Logout</a>
+                </div>
+            </div>
+
+            <!-- Guest State -->
+            {% else %}
+            <div class="role-selection" style="display: flex; gap: 2rem; justify-content: center; margin-top: 3rem;">
+                <div class="role-card"
+                    style="padding: 2rem; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; width: 300px; transition: 0.3s; background: rgba(255,255,255,0.03);">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">🔐</div>
+                    <h3>Get Started</h3>
+                    <p style="font-size: 0.9rem; margin-bottom: 1.5rem;">Login or create a new account to access your
+                        dashboard.</p>
+
+                    <div style="display: flex; gap: 1rem; flex-direction: column;">
+                        <a href="{% url 'login_generic' %}" class="btn btn-primary" style="width: 100%;">Login</a>
+                        <a href="{% url 'register_generic' %}" class="btn btn-secondary" style="width: 100%;">Create
+                            Account</a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+
+    </div>
+    <script src="{% static 'dashboard/js/script.js' %}"></script>
+</body>
+
+</html>

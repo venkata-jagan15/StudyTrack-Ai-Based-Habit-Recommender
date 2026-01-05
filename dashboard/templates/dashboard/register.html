@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register | AI Study Insight</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'dashboard/css/style.css' %}">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Inter:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        /* Custom radio button styling */
+        .role-selector {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .role-selector label {
+            flex: 1;
+            padding: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: rgba(255, 255, 255, 0.02);
+            font-weight: 500;
+        }
+
+        /* Hide default radio input */
+        .role-selector input[type="radio"] {
+            display: none;
+        }
+
+        /* Selected state */
+        .role-selector input[type="radio"]:checked+span {
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .role-selector label:has(input:checked) {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+    </style>
+</head>
+
+<body
+    style="display: flex; justify-content: center; align-items: center; min-height: 100vh; background: var(--background);">
+
+    <div class="glass-panel" style="width: 100%; max-width: 450px; padding: 2rem;">
+        <h2 style="text-align: center; margin-bottom: 2rem;">Create Account</h2>
+
+        <form method="post" style="display: flex; flex-direction: column; gap: 1rem;">
+            {% csrf_token %}
+
+            <!-- Custom Row Selection -->
+            <!-- Custom Role Selection (Only show if role not in URL) -->
+            {% if not url_role %}
+            <label style="color: var(--text-muted); font-size: 0.9rem;">I am a:</label>
+            <div class="role-selector">
+                {% for radio in form.role %}
+                <label>
+                    {{ radio.tag }}
+                    <span>{{ radio.choice_label }}</span>
+                </label>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div style="display:none;">
+                {{ form.role }}
+            </div>
+            <h3 style="text-align:center; color: var(--primary);">Registering as {{ url_role|title }}</h3>
+            {% endif %}
+
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; color: var(--text-muted);">Username</label>
+                <input type="text" name="username" class="input-field" required
+                    style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: white;">
+            </div>
+
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; color: var(--text-muted);">Email</label>
+                <input type="email" name="email" class="input-field" required
+                    style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: white;">
+            </div>
+
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; color: var(--text-muted);">Password</label>
+                <input type="password" name="password" class="input-field" required
+                    style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: white;">
+            </div>
+
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; color: var(--text-muted);">Confirm Password</label>
+                <input type="password" name="confirm_password" class="input-field" required
+                    style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: white;">
+            </div>
+
+            {% if form.errors %}
+            <div
+                style="background: rgba(239, 68, 68, 0.2); color: #f87171; padding: 0.8rem; border-radius: 8px; font-size: 0.9rem;">
+                {{ form.errors }}
+            </div>
+            {% endif %}
+
+            <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Register</button>
+        </form>
+
+        <p style="text-align: center; margin-top: 1.5rem; color: var(--text-muted);">
+            Already have an account?
+            {% if url_role %}
+            <a href="{% url 'login' url_role %}" style="color: var(--accent);">Login</a>
+            {% else %}
+            <a href="{% url 'login_generic' %}" style="color: var(--accent);">Login</a>
+            {% endif %}
+        </p>
+    </div>
+
+</body>
+
+</html>

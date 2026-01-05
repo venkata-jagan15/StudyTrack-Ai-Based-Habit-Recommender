@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Dashboard | AI Study Insight</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Inter:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'dashboard/css/style.css' %}">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body id="teacher-dashboard">
+    <!-- Navbar -->
+    <nav
+        style="padding: 1rem 2rem; background: var(--surface); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+        <div style="font-weight: 700; font-size: 1.2rem; color: var(--primary);">AI Study Insight <span
+                style="font-weight: 400; color: var(--text-muted); font-size: 0.9rem; margin-left: 0.5rem;">| Instructor
+                View - {{ teacher.username|title }}</span></div>
+        <div style="display: flex; gap: 1.5rem; align-items: center;">
+            <a href="{% url 'index' %}" class="btn btn-secondary"
+                style="padding: 0.5rem 1rem; font-size: 0.9rem;">Logout</a>
+        </div>
+    </nav>
+
+    <div class="container" style="padding-top: 2rem; padding-bottom: 2rem;">
+
+
+
+        <!-- Messages Actions -->
+        {% if messages %}
+        <div style="margin-bottom: 1.5rem;">
+            {% for message in messages %}
+            <div
+                style="padding: 1rem; border-radius: 8px; margin-bottom: 0.5rem; {% if message.tags == 'success' %}background: rgba(16, 185, 129, 0.2); color: var(--success); border: 1px solid var(--success);{% else %}background: rgba(239, 68, 68, 0.2); color: var(--danger); border: 1px solid var(--danger);{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Bulk Analysis Modal / Section (Simulated) -->
+        {% if show_bulk_modal %}
+        <div
+            style="margin-bottom: 2rem; background: var(--surface); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h2 style="font-size: 1.4rem; color: var(--primary);">Bulk Analysis Results</h2>
+                <a href="{% url 'teacher_dashboard' %}" class="btn btn-secondary">Close</a>
+            </div>
+            <table style="width: 100%; border-collapse: collapse; color: var(--text-muted);">
+                <thead>
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.1); text-align: left;">
+                        <th style="padding: 0.8rem;">Study (h)</th>
+                        <th style="padding: 0.8rem;">Sleep (h)</th>
+                        <th style="padding: 0.8rem;">Assigns</th>
+                        <th style="padding: 0.8rem;">Social (h)</th>
+                        <th style="padding: 0.8rem;">Predicted Score</th>
+                        <th style="padding: 0.8rem;">Risk</th>
+                        <th style="padding: 0.8rem;">Recommendations</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in bulk_results %}
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <td style="padding: 0.8rem;">{{ r.study }}</td>
+                        <td style="padding: 0.8rem;">{{ r.sleep }}</td>
+                        <td style="padding: 0.8rem;">{{ r.assigns }}</td>
+                        <td style="padding: 0.8rem;">{{ r.social }}</td>
+                        <td style="padding: 0.8rem; font-weight: bold; color: var(--text-main);">{{ r.score }}%</td>
+                        <td style="padding: 0.8rem;">
+                            <span
+                                style="color: {% if r.risk == 'High' %}var(--danger){% elif r.risk == 'Medium' %}var(--warning){% else %}var(--success){% endif %}; font-weight: 600;">
+                                {{ r.risk }}
+                            </span>
+                        </td>
+                        <td style="padding: 0.8rem;">{{ r.cluster }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        <!-- Header -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem;">
+            <div>
+                <h1>Classroom Analytics</h1>
+                <p>Monitor student clusters and identify at-risk individuals.</p>
+
+                <!-- View Toggles -->
+                <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+                    <button id="btn-class-view" class="btn btn-primary" onclick="switchTeacherView('class')">Class
+                        Analysis</button>
+                    <button id="btn-individual-view" class="btn btn-secondary"
+                        onclick="switchTeacherView('individual')">Individual Analysis</button>
+                </div>
+            </div>
+            <div style="display: flex; gap: 1rem; flex-direction: column; align-items: flex-end;">
+                <!-- Bulk Upload Form -->
+                <form action="{% url 'bulk_analyze' %}" method="post" enctype="multipart/form-data"
+                    style="display: flex; gap: 0.5rem; align-items: center; background: rgba(255,255,255,0.05); padding: 0.5rem; border-radius: 8px;">
+                    {% csrf_token %}
+                    <label for="csv_file"
+                        style="cursor: pointer; font-size: 0.9rem; color: var(--text-muted); margin-right: 0.5rem;">Upload
+                        CSV to Analyze:</label>
+                    <input type="file" name="csv_file" id="csv_file" accept=".csv" required
+                        style="font-size: 0.8rem; color: var(--text-muted); width: 180px;">
+                    <button type="submit" class="btn btn-secondary"
+                        style="font-size: 0.8rem; padding: 0.3rem 0.6rem;">Analyze</button>
+                </form>
+
+                <div style="display: flex; gap: 1rem;">
+                    <button class="btn btn-secondary" onclick="downloadReport()">📥 Download Report</button>
+                    <button class="btn btn-primary" onclick="alert('Recommendations sent to 5 At-Risk students!')">Send
+                        Bulk
+                        Recommendations</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Class View Sections -->
+        <div id="class-view">
+
+            <!-- Top Stats Cards -->
+            <div class="grid-cols-3" style="margin-bottom: 2rem;">
+                <div class="glass-panel" style="text-align: center;">
+                    <h3 style="color: var(--text-muted); font-size: 1rem; margin-bottom: 0.5rem;">Average Class Score
+                    </h3>
+                    <div style="font-size: 2.5rem; font-weight: 700; color: var(--text-main);">76%</div>
+                </div>
+                <div class="glass-panel" style="text-align: center;">
+                    <h3 style="color: var(--text-muted); font-size: 1rem; margin-bottom: 0.5rem;">At-Risk Students</h3>
+                    <div style="font-size: 2.5rem; font-weight: 700; color: var(--danger);">5</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">Require immediate attention</div>
+                </div>
+                <div class="glass-panel" style="text-align: center;">
+                    <h3 style="color: var(--text-muted); font-size: 1rem; margin-bottom: 0.5rem;">Identified Clusters
+                    </h3>
+                    <div style="font-size: 2.5rem; font-weight: 700; color: var(--accent);">3</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">High, Medium, Low Performers</div>
+                </div>
+            </div>
+
+            <div class="grid-cols-2" style="grid-template-columns: 2fr 1fr; margin-bottom: 2rem;">
+
+                <!-- Cluster Chart -->
+                <div class="glass-panel">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 1.5rem;">
+                        <h3>Student Behavior Clusters (K-Means)</h3>
+                        <select
+                            style="background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 0.2rem 0.5rem; border-radius: 4px;">
+                            <option>K = 3</option>
+                            <option>K = 4</option>
+                            <option>K = 5</option>
+                        </select>
+                    </div>
+                    <div style="height: 350px;">
+                        <canvas id="teacher-cluster-chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Risk Distribution -->
+                <div class="glass-panel">
+                    <h3 style="margin-bottom: 1.5rem;">Risk Distribution</h3>
+                    <div style="height: 350px;">
+                        <canvas id="teacher-risk-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NEW: Advanced Stats -->
+            <div class="grid-cols-2" style="margin-bottom: 2rem;">
+                <div class="glass-panel">
+                    <h3 style="margin-bottom: 1rem;">Grade Distribution (Histogram)</h3>
+                    <div style="height: 300px;">
+                        <canvas id="teacher-histogram-chart"></canvas>
+                    </div>
+                </div>
+                <div class="glass-panel">
+                    <h3 style="margin-bottom: 1rem;">Class Weakness Analysis</h3>
+                    <div style="height: 300px;">
+                        <canvas id="teacher-polar-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Student List -->
+            <div class="glass-panel">
+                <h3 style="margin-bottom: 1.5rem;">Student Watchlist</h3>
+                <table style="width: 100%; border-collapse: collapse; color: var(--text-muted);">
+                    <thead>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.1); text-align: left;">
+                            <th style="padding: 1rem;">ID</th>
+                            <th style="padding: 1rem;">Name</th>
+                            <th style="padding: 1rem;">Study Hours</th>
+                            <th style="padding: 1rem;">Predicted Score</th>
+                            <th style="padding: 1rem;">Risk Level</th>
+                            <th style="padding: 1rem;">Action</th>
+                        </tr>
+                    </thead>
+                    {% for s in student_data_list %}
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <td style="padding: 1rem;">{{ s.id }}</td>
+                        <td style="padding: 1rem; font-weight: 500; color: var(--text-main);">{{ s.name|title }}</td>
+                        <td style="padding: 1rem;">{{ s.study|floatformat:1 }} hrs</td>
+                        <td style="padding: 1rem;">{{ s.score|floatformat:1 }}%</td>
+                        <td style="padding: 1rem;">
+                            <span style="
+                                    background: {% if s.risk == 'High' %}rgba(239, 68, 68, 0.2){% elif s.risk == 'Medium' %}rgba(245, 158, 11, 0.2){% else %}rgba(16, 185, 129, 0.2){% endif %}; 
+                                    color: {% if s.risk == 'High' %}var(--danger){% elif s.risk == 'Medium' %}var(--warning){% else %}var(--success){% endif %}; 
+                                    padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">
+                                {{ s.risk }}
+                            </span>
+                        </td>
+                        <td style="padding: 1rem;">
+                            <button class="btn btn-secondary"
+                                style="padding: 0.3rem 0.8rem; font-size: 0.8rem;">View</button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="padding: 2rem; text-align: center; color: var(--text-muted);">No students
+                            found.</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div> <!-- End class-view -->
+
+        <!-- Individual View Section (Hidden by default) -->
+        <div id="individual-view" class="hidden">
+            <div class="glass-panel" style="margin-bottom: 2rem;">
+                <h3 style="margin-bottom: 1rem;">Student Search</h3>
+                <div style="display: flex; gap: 1rem;">
+                    <input type="text" placeholder="Enter Student Name or ID..."
+                        style="flex:1; padding: 0.8rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: white;">
+                    <button class="btn btn-primary">Search</button>
+                </div>
+            </div>
+
+            <!-- Mock Individual Report -->
+            <div class="glass-panel">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem;">John Doe (ID: 101)</h2>
+                        <div style="display: flex; gap: 1rem; color: var(--text-muted);">
+                            <span>Grade: 10th</span>
+                            <span>•</span>
+                            <span>Attendance: 85%</span>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <span
+                            style="background: rgba(239, 68, 68, 0.2); color: var(--danger); padding: 0.5rem 1rem; border-radius: 20px; font-weight: 700;">High
+                            Risk</span>
+                    </div>
+                </div>
+
+                <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 1.5rem 0;">
+
+                <div class="grid-cols-2">
+                    <div>
+                        <h4 style="margin-bottom: 1rem; color: var(--text-muted);">Habit Profile</h4>
+                        <ul style="list-style: none; color: var(--text-main);">
+                            <li style="margin-bottom: 0.5rem;">• Sleep: <strong style="color: var(--danger);">5
+                                    hrs</strong>
+                                (Low)</li>
+                            <li style="margin-bottom: 0.5rem;">• Study: <strong>2 hrs</strong> (Below Avg)</li>
+                            <li style="margin-bottom: 0.5rem;">• Social Media: <strong style="color: var(--warning);">4
+                                    hrs</strong> (High)</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 style="margin-bottom: 1rem; color: var(--text-muted);">AI Recommendation</h4>
+                        <p style="font-style: italic; opacity: 0.9;">"John shows signs of sleep deprivation affecting
+                            focus.
+                            Suggest a parent-teacher meeting regarding device usage at night."</p>
+                        <button class="btn btn-secondary" style="margin-top: 1rem; font-size: 0.8rem;">Send to
+                            student</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {{ student_data_json|json_script:"student-data" }}
+    <script src="{% static 'dashboard/js/script.js' %}?v=1.3"></script>
+</body>
+
+</html>

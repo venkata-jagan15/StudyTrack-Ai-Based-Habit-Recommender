@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard | AI Study Insight</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Inter:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'dashboard/css/style.css' %}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body id="student-dashboard">
+    <!-- Navbar -->
+    <nav
+        style="padding: 1rem 2rem; background: var(--surface); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+        <div style="font-weight: 700; font-size: 1.2rem; color: var(--primary);">AI Study Insight</div>
+        <div style="display: flex; gap: 1.5rem; align-items: center;">
+            <span style="color: var(--text-muted);">Welcome, <strong style="color: var(--text-main);">{{
+                    student.username|title }}</strong></span>
+            <a href="{% url 'index' %}" class="btn btn-secondary"
+                style="padding: 0.5rem 1rem; font-size: 0.9rem;">Logout</a>
+        </div>
+    </nav>
+
+
+    <div class="container" style="padding-top: 2rem; padding-bottom: 2rem;">
+        {% if messages %}
+        <div class="messages" style="margin-bottom: 1.5rem;">
+            {% for message in messages %}
+            <div
+                style="padding: 1rem; border-radius: 8px; margin-bottom: 0.5rem; 
+                        {% if message.tags == 'success' %} background: rgba(16, 185, 129, 0.2); color: var(--success); border: 1px solid var(--success);
+                        {% elif message.tags == 'error' %} background: rgba(239, 68, 68, 0.2); color: var(--danger); border: 1px solid var(--danger);
+                        {% else %} background: rgba(99, 102, 241, 0.2); color: var(--info); border: 1px solid var(--info); {% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Header -->
+        <div style="margin-bottom: 2rem;">
+            <h1>My Dashboard</h1>
+            <p>Track your habits and improve your academic performance.</p>
+        </div>
+
+        <!-- Top Stats Cards -->
+        <div class="grid-cols-2" style="grid-template-columns: 2fr 1fr;">
+
+            <!-- Charts Section -->
+            <div style="display: flex; flex-direction: column; gap: 2rem;">
+
+                <!-- Teacher Feedback Section -->
+                <div class="glass-panel" style="border-left: 4px solid var(--primary);">
+                    <h3 style="margin-bottom: 1rem; color: var(--text-main);"> Teacher Feedback</h3>
+                    <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px;">
+                        {% if feedback %}
+                        <p style="font-size: 0.95rem; color: var(--text-main); margin-bottom: 0.5rem;">"{{
+                            feedback.message }}"</p>
+                        <div style="font-size: 0.8rem; color: var(--text-muted); text-align: right;">- {{
+                            feedback.teacher.username|title }}, {{ feedback.created_at|timesince }} ago</div>
+                        {% else %}
+                        <p style="font-size: 0.95rem; color: var(--text-muted);">No feedback available.</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- AI Recommendations -->
+                <div class="glass-panel"
+                    style="background: linear-gradient(145deg, rgba(99, 102, 241, 0.1), rgba(15, 23, 42, 0.4)); border: 1px solid rgba(99, 102, 241, 0.3);">
+                    <h3 style="margin-bottom: 1rem; color: var(--accent);">AI Recommendations</h3>
+                    {% if recommendations %}
+                    {% for rec in recommendations %}
+                    <div class="recommendation-item"
+                        style="margin-bottom: 1rem; display: flex; gap: 1rem; align-items: start;">
+                        <div
+                            style="background: {% if rec.is_alert %}rgba(245, 158, 11, 0.2){% else %}rgba(16, 185, 129, 0.2){% endif %}; padding: 0.5rem; border-radius: 8px; color: {% if rec.is_alert %}var(--warning){% else %}var(--success){% endif %};">
+                            {% if rec.is_alert %}⚠️{% else %}💡{% endif %}
+                        </div>
+                        <div>
+                            <h4 style="font-size: 0.95rem;">{{ rec.get_category_display }}</h4>
+                            <p style="font-size: 0.85rem;">{{ rec.message }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <p style="color: var(--text-muted);">No current recommendations.</p>
+                    {% endif %}
+                </div>
+
+            </div>
+
+            <!-- Input & Recommendations Section -->
+            <div style="display: flex; flex-direction: column; gap: 2rem;">
+
+                <!-- Daily Input Form -->
+                <div class="glass-panel">
+                    <h3 style="margin-bottom: 1rem;">Update Daily Habits</h3>
+                    <form id="habit-form" method="POST" style="display: flex; flex-direction: column; gap: 1rem;">
+                        {% csrf_token %}
+                        <div>
+                            <label
+                                style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">Sleep
+                                Hours</label>
+                            <input type="number" step="0.1" name="sleep_hours" class="input-field" placeholder="e.g. 7"
+                                value="{{ latest_log.sleep_hours|default:'' }}" required
+                                style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: white;">
+                        </div>
+                        <div>
+                            <label
+                                style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">Study
+                                Hours</label>
+                            <input type="number" step="0.1" name="study_hours" class="input-field" placeholder="e.g. 4"
+                                value="{{ latest_log.study_hours|default:'' }}" required
+                                style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: white;">
+                        </div>
+                        <div>
+                            <label
+                                style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">Assignments
+                                Completed</label>
+                            <input type="number" step="1" name="assignments_completed" class="input-field"
+                                placeholder="e.g. 5" value="{{ latest_log.assignments_completed|default:'' }}" required
+                                style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: white;">
+                        </div>
+                        <div>
+                            <label
+                                style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">Social
+                                Media (Hours)</label>
+                            <input type="number" step="0.1" name="social_media_hours" class="input-field"
+                                placeholder="e.g. 2" value="{{ latest_log.social_media_hours|default:'' }}" required
+                                style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: white;">
+                        </div>
+                        <button type="submit" class="btn btn-primary"
+                            style="width: 100%; justify-content: center;">Update
+                            Analytics</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="{% static 'dashboard/js/script.js' %}?v=1.1"></script>
+</body>
+
+</html>
